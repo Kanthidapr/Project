@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 app = FastAPI()
 
@@ -13,7 +14,7 @@ app.add_middleware(
 )
 
 # 🔥 MongoDB ของคุณ
-uri = ""
+uri = "mongodb+srv://kanthidapr:kU_00035@cluster0.budqfqh.mongodb.net/"
 client = MongoClient(uri)
 
 db = client["finance"]
@@ -41,3 +42,9 @@ def delete_transaction(tid: str):
     if result.deleted_count == 0:
         return {"message": "not found"}
     return {"message": "deleted"}
+
+@app.post("/transactions")
+def add_transaction(data: dict):
+    data["date"] = datetime.now().strftime("%d/%m")
+    transactions.insert_one(data)
+    return {"message": "added"}
