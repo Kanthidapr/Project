@@ -14,7 +14,7 @@ app.add_middleware(
 )
 
 # 🔥 MongoDB ของคุณ
-uri = "mongodb+srv://kanthidapr:kU_00035@cluster0.budqfqh.mongodb.net/"
+uri = ""
 client = MongoClient(uri)
 
 db = client["finance"]
