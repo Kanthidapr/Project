@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-uri = "mongodb+srv://luster0.budqfqh.mongodb.net/finance?retryWrites=true&w=majority"
+uri = "mongodb+srv://kanthidapr:kU_00035@cluster0.budqfqh.mongodb.net/finance?retryWrites=true&w=majority"
 client = MongoClient(uri)
 
 db = client["finance"]
@@ -91,17 +91,62 @@ def add_transaction(data: Transaction):
 
     return {"id": str(result.inserted_id)}
 
+@app.put("/transactions/{tid}")
+def update_transaction(tid: str, data: Transaction):
+    t = transactions.find_one({"_id": ObjectId(tid)})
+    if not t:
+        raise HTTPException(status_code=404, detail="not found")
+
+    # ❗ คืนค่าเก่า
+    wallets.update_one(
+        {"name": t["wallet"]},
+        {"$inc": {"balance": -t["amount"]}}
+    )
+
+    # ❗ เพิ่มค่าใหม่
+    wallets.update_one(
+        {"name": data.wallet},
+        {"$inc": {"balance": data.amount}}
+    )
+
+    transactions.update_one(
+        {"_id": ObjectId(tid)},
+        {"$set": {
+            "title": data.title,
+            "amount": data.amount,
+            "wallet": data.wallet
+        }}
+    )
+
+    return {"message": "updated"}
+
 @app.delete("/transactions/{tid}")
 def delete_transaction(tid: str):
     t = transactions.find_one({"_id": ObjectId(tid)})
     if not t:
         raise HTTPException(status_code=404, detail="not found")
 
+    # ❗ คืนเงินให้ wallet
     wallets.update_one(
         {"name": t["wallet"]},
         {"$inc": {"balance": -t["amount"]}}
     )
 
+    # ❗ ลบ transaction
     transactions.delete_one({"_id": ObjectId(tid)})
 
     return {"message": "deleted"}
+
+@app.delete("/wallets/{name}")
+def delete_wallet(name: str):
+    wallet = wallets.find_one({"name": name})
+    if not wallet:
+        raise HTTPException(status_code=404, detail="wallet not found")
+
+    # ลบ transaction ที่อยู่ใน wallet นี้ทั้งหมด
+    transactions.delete_many({"wallet": name})
+
+    # ลบ wallet
+    wallets.delete_one({"name": name})
+
+    return {"message": "wallet deleted"}
