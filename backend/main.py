@@ -5,6 +5,18 @@ from datetime import datetime
 from bson import ObjectId
 from bson.errors import InvalidId
 from pydantic import BaseModel
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # อนุญาตทุกเว็บ (ใช้ตอน deploy ก่อน)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app = FastAPI()
 
